@@ -133,9 +133,41 @@ grep -rEc "$DISABLE_PATTERN" tests/ | awk -F: '{s+=$2} END {print s+0}'
 
 Skips that are legitimately permanent — platform-specific, requires-hardware — should be marked with a distinguishable helper (`skip_no_gpu`) and excluded from the pattern, so the number that remains is the number that represents debt.
 
+
+## Verify from outside the change
+
+When the task changes observable behavior, the final check should exercise that behavior through the narrowest stable surface **outside the implementation being changed**.
+
+Prefer, in order:
+
+1. the module's public API;
+2. the CLI/HTTP/RPC boundary the caller actually uses;
+3. an integration scenario that crosses the real seam.
+
+A unit test of a new helper proves the helper. It does not by itself prove the scenario that justified the change. Keep unit tests for localization, but use one outward-facing observation for the final claim when practical.
+
+Do not build a larger test framework just to satisfy this rule. If the existing repository has no affordable outside surface, state what was observed and use the closest stable seam.
+
+## Fresh-context review
+
+Tier-2 and tier-3 changes get one review that does not inherit the implementation conversation **when the runtime can provide an independent reviewer/subagent**. The point is not a different model; the point is an independent mental model. If independent context is unavailable, produce the same inputs as a review packet for the next human or agent and continue without claiming that a self-review is fresh.
+
+Give the reviewer only:
+
+- the behavior or issue being changed;
+- root and applicable module `AGENTS.md` facts/rules;
+- the test change and implementation diff;
+- the verification commands and their output.
+
+Do **not** give it the implementation conversation, the implementer's chain of explanations, failed attempts, or a defense of the chosen design. Ask it to treat the implementation as untrusted and check the behavior, contracts, failure semantics, and whether the tests could pass while the requested behavior is still wrong.
+
+If a fresh reviewer cannot judge correctness without the author's conversation history, do not add the conversation. That is evidence of one of four things: the behavior is underspecified, the diff is too broad, a repository fact is missing, or a boundary leaks. Fix that problem or route the structural part to `surveyor`.
+
+Tier 1 deliberately skips this extra pass unless repository policy already requires review. The process may not cost more than the change.
+
 ## Done, and the stuck report
 
-**Done** is the scenario from `SPEC.md`, or, when there is no spec, one sentence of observable behavior written before the work started. Report it by describing what you ran and what you saw, not by describing the diff. "All tests pass" is not a report of a result; it is a report of the measurement.
+**Done** is the scenario from `SPEC.md`, or, when there is no spec, one sentence of observable behavior written before the work started. Report it by describing what you ran and what you saw from the narrowest stable surface outside the changed implementation when practical, not by describing the diff. "All tests pass" is not a report of a result; it is a report of the measurement. Tier-2 and tier-3 work also includes the fresh-context review above when independent context exists, or a review packet when it does not.
 
 **Stuck** is what you produce when the change cannot be made without breaking one of the rules above. Four parts:
 

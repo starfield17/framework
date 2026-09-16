@@ -1,6 +1,6 @@
 ---
 name: steward
-description: Governs how an agent changes a codebase that already exists and already has a test suite — the steady state, where most of a project's life is spent. Use for bug fixes, feature additions, refactors and cleanup in an established repository, and especially when tests keep getting skipped or weakened to make CI green, when dead code and near-duplicate helpers keep piling up, when a one-line fix keeps turning into an interface change, or when nobody can tell which changes need a human's approval. Also use when someone asks how to stop an agent from cheating its own tests, how to feed implementation problems back into the design, or what an agent should be allowed to delete. Output is a change tier for the work in hand, ratchet checks that fail when skipped tests or dead code increase, and an append-only friction log. Do NOT use this to decide what to build (that is producer), to lay out modules or create boundaries in a new or unstructured repository (that is surveyor), or as a general source of coding-style advice.
+description: Default change loop for an established codebase whose current module boundaries are already known. Use for bug fixes, feature additions, refactors and cleanup that fit those boundaries, and especially when tests are weakened to make CI green, dead code or duplicate helpers accumulate, a small fix starts widening a public surface, or nobody can tell which changes need approval. Steward also detects architecture transitions: if work creates/deletes/splits/merges a module, moves capability ownership, changes dependency policy, repeatedly crosses the same boundary, or requires a neighbor's internals, invoke/load `surveyor` before continuing the structural part, then return here for implementation. Output is a change tier, integrity/ratchet checks, observable verification, and friction feedback. Do NOT use this to decide what to build (producer), or as general coding-style advice.
 ---
 
 # Steward
@@ -9,7 +9,7 @@ The failure this prevents: an agent is asked to fix a date-parsing bug. It fixes
 
 Do that two hundred times and the repository has a test suite that proves nothing, four date parsers, and no boundaries left. Each individual step was locally reasonable — that's what makes this the steady-state failure rather than a bad-agent failure.
 
-`producer` decides what to build. `surveyor` shapes where things live. Steward governs everything after that.
+`producer` decides what to build. `surveyor` shapes where things live. Steward governs work **inside the current shape**. When the shape itself becomes part of a later feature, Surveyor re-enters; repositories do not move through these skills only once.
 
 ## Step 0 — Decide whether to run at all
 
@@ -23,6 +23,26 @@ Skip it, say nothing about it, and just do the work when:
 Run it on any change to code that someone will still be running next quarter.
 
 **Budget: the process may not cost more than the change.** A tier-1 fix gets a tier check, the existing test run, and nothing else — no ceremony, no report, no friction entry. If steward turns a three-line fix into a document, it has become the entropy it exists to remove.
+
+
+## Routing: default here, escalate structure
+
+Do not choose between Steward and Surveyor based on repository age. Choose based on **what the current change alters**.
+
+| Current change | Owner |
+|---|---|
+| Behavior changes inside an existing module | `steward` |
+| Internal refactor with the same public/dependency shape | `steward` |
+| Public contract changes but ownership stays put | `steward` tier 3 |
+| New/deleted/split/merged module | `surveyor` first, then `steward` |
+| Capability ownership moves between modules | `surveyor` first, then `steward` |
+| Dependency policy/direction must change | `surveyor` first, then `steward` |
+| A local change needs a neighbor's internals | `surveyor` question before more context is loaded |
+| Repeated friction in the same module | `surveyor` triage |
+
+This distinction is deliberate: Steward owns **change discipline**; Surveyor owns **change topology**.
+
+If a tier-4 signal appears after Steward has already been selected, do not keep going under Steward just because the session started here. Invoke/load Surveyor and apply its boundary procedure to the structural part. If the environment cannot dispatch another skill mid-task, read and follow the installed Surveyor instructions rather than reproducing a second architecture method here. Then return to this loop for the implementation.
 
 ## The one rule that governs everything else
 
@@ -41,11 +61,12 @@ The corollary applies to this skill too: a rule here that nothing can check is a
 
 Every unit of steady-state work has the same shape.
 
-1. **Read down, not across.** Root `AGENTS.md`, then the nearest module `AGENTS.md`, then the module. Stop there. Reading more files feels like diligence and is how a two-file change becomes a nine-file change.
+1. **Read down, not across.** Root `AGENTS.md`, then the nearest module `AGENTS.md`, then the module and direct dependencies' public surfaces. Stop there. If correctness requires a neighbor's internals, do not solve that by reading sideways; treat it as an architecture-transition signal for `surveyor`.
 2. **Classify.** Run the tier check before writing code (`tiers.md`). The tier is a property of the diff, not of how big the change feels.
 3. **Do the work in that tier only.** If the work turns out to need a higher tier, stop and re-enter at that tier. Do not finish the change and mention it afterwards.
-4. **Verify.** The existing gates, plus the integrity check (`verification.md`). Green is necessary and not sufficient — done is defined by the scenario, not the exit code.
-5. **Close.** Either done, or a stuck report. Both are terminal, both are acceptable. Log friction only if there was friction (`friction.md`).
+4. **Verify.** The existing gates, plus the integrity check (`verification.md`). Green is necessary and not sufficient — done is defined by the scenario, not the exit code. Observable behavior is verified from outside the changed implementation when practical.
+5. **Fresh review for tiers 2 and 3.** When an independent reviewer/subagent is available, review from a clean context using the behavior/issue, applicable `AGENTS.md`, the diff, and verification output — not the implementation conversation. If independent context is unavailable, emit that same review packet for the next reviewer; do not call self-review 'fresh'. Tier 1 skips this unless repository policy already requires review. Details in `verification.md`.
+6. **Close.** Either done, or a stuck report. Both are terminal, both are acceptable. Log friction only if there was friction (`friction.md`).
 
 ## Change tiers
 
@@ -54,7 +75,7 @@ Every unit of steady-state work has the same shape.
 | **1 · Internal** | No test file and no public-surface file in the diff | Just do it. Existing tests are the whole gate |
 | **2 · Behavior** | Test files in the diff, public surface untouched | Change the tests in their own commit, *before* the implementation, and say in one line what behavior changed |
 | **3 · Contract** | A public surface, schema, migration, or API file in the diff | Stop. Other people's code depends on this. Name the callers and get a human yes |
-| **4 · Structure** | New or deleted module, or a change to the dependency policy | Not this skill. Go back to `surveyor` |
+| **4 · Structure** | Module set/ownership changes, or dependency policy changes | Architecture transition: run `surveyor`, then return here for implementation |
 
 Two properties matter more than the boundaries themselves. The test is **mechanical** — it reads the diff, so it does not depend on the agent's estimate of how big a change is, and that estimate is always rounded down. And the tier is **discovered before the work, checked again after**: a change that starts as tier 1 and ends touching a public file was a tier-3 change all along, discovered late.
 
@@ -97,9 +118,10 @@ Read `entropy.md` before deleting anything — in particular the list of places 
 
 ## Definition of done for a steady-state task
 
-- The scenario behaves as described, checked by running it, not by reading the diff.
+- The scenario behaves as described, checked by running it through the narrowest stable surface outside the changed implementation when practical, not by reading the diff.
 - The existing gates pass, and none of them were modified in this change.
-- The tier the change ended in is the tier it was done under.
+- The tier the change ended in is the tier it was done under; any tier-4 portion passed through Surveyor before implementation.
+- Tier-2 and tier-3 changes received a fresh-context review when independent context was available; otherwise a review packet was produced for the next reviewer, without pretending self-review was independent.
 - Anything found and not fixed is written down — in `Found · Not doing` if there is a `SPEC.md`, otherwise in the stuck report.
 
 ## Self-check before you finish
@@ -108,6 +130,8 @@ Read `entropy.md` before deleting anything — in particular the list of places 
 - Did I add a skip, an xfail, a widened tolerance, or a mock that returns the value the assertion is looking for?
 - Did I add code that duplicates something already in the repository because touching the original felt risky?
 - Did I discover a contract change halfway through and keep going instead of stopping?
+- Did I discover a structural change and continue under Steward instead of re-entering Surveyor?
+- Did I need a neighbor's internals and treat that as 'more context' rather than an architecture signal?
 - Did I widen a module's public surface to reach one value? (That is tier 3, no matter how small the addition looks.)
 - Am I reporting "done" for something I have not observed working?
 - Did I run into a rule that was wrong and fail to write it down?

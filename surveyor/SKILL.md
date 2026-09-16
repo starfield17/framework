@@ -1,6 +1,6 @@
 ---
 name: surveyor
-description: Shapes a repository so a coding agent can change one part of it safely without loading the whole thing. Use whenever someone is starting a codebase that agents will maintain, or complains that an agent keeps breaking unrelated code, duplicating helpers, or touching a dozen files for a small change — and also when they ask where module boundaries should go, how to structure a growing project for AI, what to put in AGENTS.md or CLAUDE.md, or how to stop architecture from rotting. Output is a repository map of facts plus at least one command that fails on a boundary violation. Do NOT use this to decide what to build or plan a feature (that is the producer skill), to review a specific diff, or as a general source of design advice — this shapes the environment, not the work.
+description: Shapes and reshapes repository boundaries so a coding agent can change one part safely without loading the whole codebase. Use at bootstrap AND during the life of an established repository whenever a change creates, deletes, splits or merges a module; moves capability ownership; changes the dependency policy; proposes a new shared/common layer; repeatedly forces cross-module edits; or requires reading a neighbor's internals to make a local change correctly. Also use when asked where module boundaries should go, what belongs in AGENTS.md/CLAUDE.md, or how to stop architecture from rotting. This is an architecture-transition skill, not a one-time setup skill. Output is a repository map of facts plus at least one command that fails on a boundary violation. Do NOT use this to decide what to build (producer), to implement an ordinary feature that fits existing boundaries (steward), or to review a specific diff.
 ---
 
 # Surveyor
@@ -14,11 +14,31 @@ None of that is a reasoning failure. The repository made the wrong change easy t
 Skip it, say nothing about it, and just do the work when:
 
 - The project is under roughly ten source files. Structure costs more than it saves.
-- The user asked for a specific feature or fix. Boundary work is not a prerequisite for typing.
+- The user asked for a specific feature or fix **and it fits the existing boundaries**. Ordinary implementation belongs to `steward`; boundary work is not a prerequisite for typing.
 - There is no repository yet and no code — the question is what to build. That is `producer`.
 - Boundaries already exist and a check already enforces them, and the complaint is about something else.
 
-Run it when a change that should be local isn't, or when someone is about to create the structure that will decide this for the next two years.
+Run it when a change that should be local isn't, or when the change itself alters the structure that future work will inherit. Mature repositories re-enter Surveyor whenever architecture transitions; they do not graduate from it permanently.
+
+## Architecture-transition triggers
+
+A feature can be ordinary work and still contain a structural event. Run Surveyor **before implementing the structural part** when any of these is true:
+
+- a module is created, deleted, split, or merged;
+- responsibility for a capability moves from one module to another;
+- an allowed dependency edge or dependency direction must change;
+- a new `shared/`, `common/`, `utils/`, service registry, plugin layer, or cross-cutting abstraction is proposed because two modules need the same thing;
+- the same module appears repeatedly in `FRICTION.md`, especially for different constraints;
+- a supposedly local change requires reading or editing a neighbor's internals to be correct.
+
+Do **not** run Surveyor merely because a feature is new. A new behavior inside an existing owner is `steward`. The trigger is a change to ownership or dependency shape, not novelty.
+
+The normal lifecycle is therefore not `surveyor → steward` once. It is:
+
+```text
+surveyor → steward → steward → surveyor → steward → ...
+             local work       architecture transition
+```
 
 **Budget: one new level of structure and one new command.** If the plan involves moving most of the files, it is the wrong plan — read `retrofit.md`.
 
@@ -49,7 +69,7 @@ Cut where change stops propagating. Two tests for a proposed boundary:
 
 > **The three changes test.** Name three changes plausibly coming in the next few months. If two or more cross the boundary, it is in the wrong place.
 
-> **The local reading test.** Can a change inside this boundary be made correctly by someone who has read only this directory and the public contracts of its neighbors? If no, the boundary is decorative.
+> **The fresh-context test.** Can a fresh agent make a normal change inside this boundary after reading only: (1) root `AGENTS.md`, (2) the nearest module `AGENTS.md`, (3) this module, and (4) the public surfaces of its direct dependencies? If correctness requires conversation history or a neighbor's internals, the boundary is leaking, misplaced, or missing a fact.
 
 With git history the first test is measurable instead of guessed — files that change in the same commits belong on the same side. `retrofit.md` has a script.
 
@@ -121,6 +141,7 @@ Do not rewrite. Read `retrofit.md`. The short version: declare the boundary you 
 - Is there a rule stated in prose that no command checks? Either make it executable or drop it.
 - Did I make the check fail on purpose and watch it fail?
 - Did I add structure without being able to name the event that required it?
-- Could an agent correctly change one module having read only that module and its neighbors' contracts?
+- Could a fresh agent correctly change one module after reading only root/module instructions, that module, and its direct dependencies' public contracts?
+- Did understanding the change require a neighbor's internals or prior conversation history? If yes, did I treat that as a boundary/fact failure instead of simply loading more context?
 - Does every directory have an owner and a reason to change, or did a `shared/` appear because two things looked alike?
 - Is root `AGENTS.md` longer than one screen?

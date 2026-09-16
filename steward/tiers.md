@@ -4,17 +4,21 @@ The tier is a property of the diff. It is not a judgment about how big or risky 
 
 ## The config
 
-`tools/tiers.txt` — one rule per line, `kind` then a glob. Fill it in once, from the repository's actual layout.
+`tools/tiers.txt` — one entry per line. Normal kinds use `kind  glob`; `module-root` uses a directory whose first-level children are modules. Fill it in once, from the repository's actual layout.
 
 ```text
-# Tier 4 — structure. Back to surveyor.
+# Module roots — adding/removing a first-level child is tier 4.
+module-root src/modules
+# module-root packages
+# module-root crates
+
+# Tier 4 — architecture policy itself.
 structure  .importlinter
 structure  .dependency-cruiser.js
 structure  tools/boundaries.yaml
-structure  **/Cargo.toml
-structure  **/go.mod
+structure  tools/dependency-policy.yaml
 
-# Tier 3 — contract. Someone outside this module depends on it.
+# Tier 3 — contract. Someone outside this module or repository process depends on it.
 contract   src/modules/*/index.ts
 contract   src/modules/*/public.py
 contract   **/openapi.yaml
@@ -22,6 +26,12 @@ contract   **/*.proto
 contract   migrations/**
 contract   **/schema.sql
 contract   src/api/**
+contract   Cargo.toml
+contract   **/Cargo.toml
+contract   go.mod
+contract   **/go.mod
+contract   package.json
+contract   pyproject.toml
 
 # Tier 2 — the measurement itself.
 test       tests/**
@@ -33,7 +43,7 @@ test       **/*.spec.ts
 # Everything else is tier 1.
 ```
 
-Getting the `contract` list right is most of the value here, and it is the part only this repository knows. If `surveyor` has already run, the public surface files named in each module's `AGENTS.md` are exactly this list — copy them over.
+Getting the `contract` list right is most of the value here, and it is the part only this repository knows. If `surveyor` has already run, the public surface files named in each module's `AGENTS.md` are exactly this list — copy them over. `module-root` entries name directories whose first-level children are architectural modules; a new or removed child is mechanically tier 4. This closes the common gap where the prose says 'new module = structure' but the classifier cannot see it.
 
 ## The classifier
 
@@ -48,18 +58,29 @@ BASE = sys.argv[1] if len(sys.argv) > 1 else "HEAD"
 CFG = pathlib.Path("tools/tiers.txt")
 
 rules = []
+module_roots = []
 for line in CFG.read_text().splitlines():
     line = line.split("#", 1)[0].strip()
-    if line:
-        kind, _, glob = line.partition(" ")
-        rules.append((kind, glob.strip()))
+    if not line:
+        continue
+    kind, _, value = line.partition(" ")
+    value = value.strip().rstrip("/")
+    if kind == "module-root":
+        module_roots.append(value)
+    else:
+        rules.append((kind, value))
 
-changed = subprocess.run(
-    ["git", "diff", "--name-only", BASE],
-    capture_output=True, text=True, check=True).stdout.split()
-changed += subprocess.run(
-    ["git", "ls-files", "--others", "--exclude-standard"],
-    capture_output=True, text=True, check=True).stdout.split()
+
+def run(*args: str) -> list[str]:
+    return subprocess.run(
+        list(args), capture_output=True, text=True, check=True
+    ).stdout.splitlines()
+
+
+changed_status = run("git", "diff", "--name-status", BASE)
+untracked = run("git", "ls-files", "--others", "--exclude-standard")
+changed = [line.split("\t")[-1] for line in changed_status] + untracked
+
 
 def kinds(path: str) -> set[str]:
     out = set()
@@ -68,19 +89,53 @@ def kinds(path: str) -> set[str]:
             out.add(kind)
     return out
 
+
+def first_level_modules(paths: list[str], root: str) -> set[str]:
+    prefix = root + "/"
+    out = set()
+    for path in paths:
+        if path.startswith(prefix):
+            rest = path[len(prefix):]
+            if "/" in rest:
+                out.add(rest.split("/", 1)[0])
+    return out
+
+
+# Compare architectural module sets at BASE and in the current worktree/index.
+structure_events = []
+base_files = run("git", "ls-tree", "-r", "--name-only", BASE)
+current_files = [
+    path for path in run("git", "ls-files", "--cached", "--others", "--exclude-standard")
+    if pathlib.Path(path).exists()
+]
+for root in module_roots:
+    before = first_level_modules(base_files, root)
+    after = first_level_modules(current_files, root)
+    for name in sorted(after - before):
+        structure_events.append(f"new module: {root}/{name}")
+    for name in sorted(before - after):
+        structure_events.append(f"deleted module: {root}/{name}")
+
 hits = {"structure": [], "contract": [], "test": [], "internal": []}
 for path in sorted(set(changed)):
     for kind in kinds(path) or {"internal"}:
-        hits[kind].append(path)
+        hits.setdefault(kind, []).append(path)
 
-if not any(hits.values()):
+if not changed and not structure_events:
     print("tier 0 — nothing changed")
     sys.exit(0)
 
+if structure_events or hits["structure"]:
+    print("tier 4 — STRUCTURE. Run Surveyor before continuing, then return to Steward.")
+    for event in structure_events:
+        print(f"  {event}")
+    for path in hits["structure"]:
+        print(f"  architecture policy: {path}")
+    sys.exit(4)
+
 for kind, tier, verdict in [
-    ("structure", 4, "STOP. Dependency policy or module set changed — this is surveyor's job."),
-    ("contract",  3, "STOP. A public surface changed. Name the callers, get a human yes."),
-    ("test",      2, "Tests changed. They land in their own commit, before the implementation."),
+    ("contract", 3, "STOP. A public/deployment contract changed. Name the callers, get a human yes when required."),
+    ("test",     2, "Tests changed. They land in their own commit, before the implementation."),
 ]:
     if hits[kind]:
         print(f"tier {tier} — {verdict}")
@@ -104,7 +159,7 @@ Run it **twice** — once against the plan, once against the finished diff. The 
 
 **Tier 3 · contract.** Stop and produce three things before touching anything: the list of call sites (`grep`, not memory), what breaks for each, and whether the change is additive or breaking. Additive changes to a surface with a handful of internal callers are usually fine to proceed on after saying so. Breaking changes need a human. Adding one function to a public surface **is** a tier-3 change; the size of the addition is not the issue, the permanence of the promise is.
 
-**Tier 4 · structure.** Not this skill. New module, deleted module, or an edit to the dependency policy — that is a boundary decision and belongs to `surveyor`.
+**Tier 4 · structure.** Re-enter `surveyor` before implementing the structural part. This includes a new/deleted module, moved capability ownership, or an edit to dependency policy/direction. After Surveyor establishes the boundary and its executable check, return to Steward for the implementation. Repository age is irrelevant; mature repositories can hit tier 4 repeatedly.
 
 ## Cases that look ambiguous and are not
 

@@ -56,7 +56,7 @@ Then move triaged entries to a `## Resolved` section with the outcome appended, 
 
 Two entries naming the same constraint is the threshold for acting. One is an anecdote; the second is evidence the rule is mis-specified rather than the situation being unusual.
 
-Two entries naming the same *module* — different constraints, same place — mean something different: the boundary is probably in the wrong location, and that is a `surveyor` question, not a rule question.
+Two entries naming the same *module* — different constraints, same place — mean something different: the boundary is probably in the wrong location. Re-enter `surveyor` even if the repository is mature; this is an architecture-transition signal, not ordinary Steward cleanup.
 
 ## Feeding it back to producer
 
