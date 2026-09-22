@@ -124,6 +124,20 @@ Read `entropy.md` before deleting anything — in particular the list of places 
 - Tier-2 and tier-3 changes received a fresh-context review when independent context was available; otherwise a review packet was produced for the next reviewer, without pretending self-review was independent.
 - Anything found and not fixed is written down — in `Found · Not doing` if there is a `SPEC.md`, otherwise in the stuck report.
 
+## Taste degradation check
+
+Passing tests is necessary but does not prove that a change preserves the project's design judgment.
+
+Before finishing, check whether the change introduced:
+
+- unnecessary abstraction layers
+- broader concepts than the feature requires
+- hidden state or surprising behavior
+- duplicated mechanisms instead of clearer ownership
+- features that make the project look larger while making it harder to understand
+
+A good change should improve capability without degrading the project's mental model.
+
 ## Self-check before you finish
 
 - Did any test file appear in a diff that I classified as tier 1?

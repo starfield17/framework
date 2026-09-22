@@ -123,6 +123,53 @@ An interviewer that always produces a spec is a scope-inflation machine. Three l
 
 Match the fill depth to the tier. A T1 script gets the first three lines and two prohibitions; the other sections don't exist. If Producer generates a "Prior art" section for a ten-line script, it has become the thing it opposes.
 
+## Step 5 — Define the quality contract
+
+A specification that only says what to build still leaves the agent optimizing against its default assumptions. Before writing the artifact, define the project's **quality contract**: the few properties that determine whether a solution feels correct rather than merely functional.
+
+Do not write marketing adjectives. Convert taste into observable trade-offs.
+
+Bad:
+
+- modern
+- powerful
+- user friendly
+
+Good:
+
+- simple but not simplistic: avoid abstraction that exists only for future possibilities
+- flexible but not magical: important state and behavior must remain observable
+- detailed but not noisy: additions must reinforce the core mental model
+
+The quality contract answers:
+
+- What should this project optimize for?
+- What tempting solutions would technically work but violate the project's identity?
+- What trade-off should an agent preserve when requirements are ambiguous?
+
+## Step 6 — Predict failure modes
+
+Before implementation, list the likely wrong directions an agent may take. The purpose is not to describe bugs; it is to shrink the search space.
+
+Format:
+
+```
+Failure mode:
+Why it is tempting:
+What to do instead:
+```
+
+Examples:
+
+- Failure: add a plugin framework because two abstractions appeared
+  - Why tempting: it looks extensible
+  - Instead: keep the concrete path until a real second implementation exists
+
+- Failure: turn a focused local tool into a platform
+  - Why tempting: platforms appear more impressive
+  - Instead: preserve the original scope and user mental model
+```
+
 ## The artifact
 
 Write it to `SPEC.md` at the project root. The reader is the agent, not a human, which drives two structural choices: order by **reread frequency** rather than narrative — motivation and research get read once and belong at the bottom, constraints get read every session and belong at the top. And use a **definition of done** rather than a feature list, because a feature list invites additions from anyone while a completion condition invites subtraction — anything outside it isn't in scope.

@@ -83,6 +83,25 @@ A boundary is not a folder name. It consists of:
 
 Only the last two make it real. The first three are naming conventions until something enforces them.
 
+## Concept boundaries
+
+Architecture boundaries are not only about code ownership. They also protect the identity of a system.
+
+A change can be technically clean and still be wrong if it expands the concept beyond what the project promises.
+
+Examples:
+
+- A local video compressor becoming a cloud video platform
+- A remote execution primitive becoming a full remote desktop product
+- A focused library becoming a framework without a concrete need
+
+When evaluating a structural change, ask two questions:
+
+1. Does this belong to the existing concept, or does it create a different product?
+2. Does this preserve the user's existing mental model?
+
+A boundary violation is not only "module A imports module B". It can also be "the project no longer means the same thing."
+
 ## How much structure
 
 You must be able to name the event that pushed you up a level. "It might grow" is not an event.
