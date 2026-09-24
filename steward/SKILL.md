@@ -1,6 +1,6 @@
 ---
 name: steward
-description: Default change loop for an established codebase whose current module boundaries are already known. Use for bug fixes, feature additions, refactors and cleanup that fit those boundaries, and especially when tests are weakened to make CI green, dead code or duplicate helpers accumulate, a small fix starts widening a public surface, or nobody can tell which changes need approval. Steward also detects architecture transitions — if work creates/deletes/splits/merges a module, moves capability ownership, changes dependency policy, repeatedly crosses the same boundary, or requires a neighbor's internals, invoke/load `surveyor` before continuing the structural part, then return here for implementation. Output is a change tier, integrity/ratchet checks, observable verification, and friction feedback. Do NOT use this to decide what to build (producer), or as general coding-style advice.
+description: Default change loop for an established codebase whose current module boundaries are already known. Use for bug fixes, feature additions, refactors and cleanup that fit those boundaries, and especially when tests are weakened to make CI green, dead code or duplicate helpers accumulate, a small fix starts widening a public surface, or nobody can tell which changes need approval. Steward also detects architecture transitions — if work creates/deletes/splits/merges a module, moves capability ownership, changes dependency policy, repeatedly crosses the same boundary, or requires a neighbor's internals, invoke/load `surveyor` before continuing the structural part, then return here for implementation. If the approach itself keeps failing (stuck twice for different reasons, or a repeated constraint that neither a rule change nor a code change can resolve), load `gadfly`. Output is a change tier, integrity/ratchet checks, observable verification, and friction feedback. Do NOT use this to decide what to build (producer), or as general coding-style advice.
 ---
 
 # Steward
@@ -39,8 +39,9 @@ Do not choose between Steward and Surveyor based on repository age. Choose based
 | Dependency policy/direction must change | `surveyor` first, then `steward` |
 | A local change needs a neighbor's internals | `surveyor` question before more context is loaded |
 | Repeated friction in the same module | `surveyor` triage |
+| The approach itself is in question — stuck twice for different reasons, or a repeated constraint where neither rule nor code can be defended | `gadfly`, then back here |
 
-This distinction is deliberate: Steward owns **change discipline**; Surveyor owns **change topology**.
+This distinction is deliberate: Steward owns **change discipline**; Surveyor owns **change topology**; Gadfly owns **the solution path** when that path, rather than the change, is what keeps failing.
 
 If a tier-4 signal appears after Steward has already been selected, do not keep going under Steward just because the session started here. Invoke/load Surveyor and apply its boundary procedure to the structural part. If the environment cannot dispatch another skill mid-task, read and follow the installed Surveyor instructions rather than reproducing a second architecture method here. Then return to this loop for the implementation.
 
@@ -66,7 +67,7 @@ Every unit of steady-state work has the same shape.
 3. **Do the work in that tier only.** If the work turns out to need a higher tier, stop and re-enter at that tier. Do not finish the change and mention it afterwards.
 4. **Verify.** The existing gates, plus the integrity check (`verification.md`). Green is necessary and not sufficient — done is defined by the scenario, not the exit code. Observable behavior is verified from outside the changed implementation when practical.
 5. **Fresh review for tiers 2 and 3.** When an independent reviewer/subagent is available, review from a clean context using the behavior/issue, applicable `AGENTS.md`, the diff, and verification output — not the implementation conversation. If independent context is unavailable, emit that same review packet for the next reviewer; do not call self-review 'fresh'. Tier 1 skips this unless repository policy already requires review. Details in `verification.md`.
-6. **Close.** Either done, or a stuck report. Both are terminal, both are acceptable. Log friction only if there was friction (`friction.md`).
+6. **Close.** Either done, or a stuck report. Both are terminal, both are acceptable. Log friction only if there was friction (`friction.md`). A stuck report whose cause is "this approach cannot meet these constraints", rather than "this change needs approval", names `gadfly` as the next step, and states the default path that failed in one line — that line is gadfly's input.
 
 ## Change tiers
 
@@ -149,3 +150,5 @@ A good change should improve capability without degrading the project's mental m
 - Did I widen a module's public surface to reach one value? (That is tier 3, no matter how small the addition looks.)
 - Am I reporting "done" for something I have not observed working?
 - Did I run into a rule that was wrong and fail to write it down?
+- Did I keep grinding on an approach that had already failed twice for different reasons, instead of handing the approach itself to gadfly?
+- If a gadfly frame governs this code, does my change still respect its invariant — and does the invariant's check still run?

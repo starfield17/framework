@@ -40,6 +40,8 @@ surveyor → steward → steward → surveyor → steward → ...
              local work       architecture transition
 ```
 
+`gadfly` can enter at any point in that line. It runs when the solution path — not the boundaries — is what is in question. It hands back a frame invariant. If that invariant is about where code may live ("every formula is emitted from `ir/`"), it is a boundary rule, and it gets enforced here like any other: in the dependency policy, by the one command, after watching it fail once.
+
 **Budget: one new level of structure and one new command.** If the plan involves moving most of the files, it is the wrong plan — read `retrofit.md`.
 
 ## The one rule that governs everything else
@@ -139,6 +141,8 @@ Prose enforces nothing. Pick the cheapest mechanism that fails the build:
 2. **Build or lint config.** import-linter, dependency-cruiser, depguard.
 3. **A test that inspects the source.** When nothing above fits.
 4. Prose. Not an option.
+
+A frame invariant from `gadfly` is enforced the same way. It must not become a second, parallel mechanism: if it can be expressed as a forbidden import or a forbidden location, it belongs in the existing boundary check.
 
 Prefer 1 over 2 harder than feels natural. A large share of the boundaries people reach for architecture tests to protect could just be a directory the language already refuses to let you cross.
 

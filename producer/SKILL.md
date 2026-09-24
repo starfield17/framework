@@ -80,6 +80,12 @@ Most requests are T1 or T2. Suspect yourself if you land on T4 — check that a 
 
 **T3 deserves special care.** When the user is "not computer-savvy" — the classic "something for my mom" — the hard problem is never the features. It's distribution and launch. The single most consequential decision is whether it becomes a double-clickable thing, and that decision reshapes the architecture more than any feature does. So for T3, pin the delivery form early and let it override tier defaults: packaging into an executable drags in a directory layout and dependency management, which contradicts the "one file" default. **Delivery form outranks tier defaults. Resolve it before writing the do-not-build list.**
 
+## Step 3b — Frame, when the path is not obvious
+
+Tier and delivery settle what the thing is *for*. They do not settle what kind of problem it is. When a `gadfly` trigger holds — the medium fights the problem, the plan implies dozens of near-identical hand-written pieces, the user says it is easy to fail, or the user offers a hunch ("it's basically a compiler") — run `gadfly` now, before the do-not-build list, because the chosen frame produces prohibitions of its own. Skip for T1 and for anything with an obvious standard solution.
+
+This is the same move as the challenged defaults above, aimed at the solution path instead of the requirements: state the path that would happen by default, and make it survive an objection.
+
 ## Step 4 — Derive the do-not-build list
 
 Do not ask the user what to prohibit. They have no idea what an agent will over-build. Derive the list from the tier and delivery form, then show it for a yes/no.
@@ -192,6 +198,9 @@ Delivery: <exactly how it gets launched>
 - N9 When something missing or broken turns up outside this spec, append it
      to "Found · Not doing" and keep going. Do not implement it.
 
+## Frame
+(only if gadfly ran — its block goes here; the invariant also appears above as an N-entry)
+
 ## Prior art
 - Checked <A>, <B> — not used because <one line>
 - Reusing: <library or project>
@@ -222,3 +231,4 @@ The **Found · Not doing** section is a pressure valve, and also the user's back
 - Did I generate a full document for a ten-line script? (bad)
 - Is the definition of done a scenario, or did it become a feature list?
 - Did the delivery form get settled before the prohibitions?
+- If gadfly ran, did its frame invariant become a numbered prohibition with a check behind it?

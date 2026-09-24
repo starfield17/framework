@@ -4,6 +4,8 @@ Implementation is where design errors surface first. By default that information
 
 `FRICTION.md` is the reverse channel. It is the counterpart to `SPEC.md`'s `Found · Not doing`: that one collects work outside the scope, this one collects **rules that were wrong**.
 
+**Received, not manufactured.** Everything in this file is friction *received*: reality pushed back on a rule during real work. `gadfly` manufactures friction on purpose, before code exists, against a path nobody has tested yet. Keep the two apart — speculative objections do not belong here, because they would drown out the evidence. But read this file whenever gadfly runs: a constraint that keeps producing entries is often a frame failing in slow motion.
+
 ## The bar for writing an entry
 
 One of these actually happened:
@@ -47,6 +49,7 @@ Every entry leaves triage with exactly one of these outcomes:
 | **Change the code** | The rule is right and the code is on the wrong side of it | A tier-2 or tier-3 task, scheduled |
 | **Clarify** | The rule is right but was read wrong, twice | One added sentence at the point of confusion — not a new document |
 | **Close as noise** | One-off, or the friction was the author's | Delete the entry. Say nothing further |
+| **Reframe** | Neither the rule nor the code can be defended; the approach is what produces the friction | A `gadfly` run. Its invariant replaces the rule, and its check replaces the old one in the same commit |
 
 Then move triaged entries to a `## Resolved` section with the outcome appended, or delete them. Either is fine; leaving them in place is not, because the count is the trigger for the next triage.
 
@@ -57,6 +60,8 @@ Then move triaged entries to a `## Resolved` section with the outcome appended, 
 Two entries naming the same constraint is the threshold for acting. One is an anecdote; the second is evidence the rule is mis-specified rather than the situation being unusual.
 
 Two entries naming the same *module* — different constraints, same place — mean something different: the boundary is probably in the wrong location. Re-enter `surveyor` even if the repository is mature; this is an architecture-transition signal, not ordinary Steward cleanup.
+
+Two entries naming the same constraint, where triage cannot pick "change the rule" or "change the code" without the other side winning the argument, mean something else again: the rule and the code are both downstream of an approach that is wrong. That is the **Reframe** outcome — hand the approach to `gadfly`, with the entries as its breakpoints.
 
 ## Feeding it back to producer
 
