@@ -1,8 +1,3 @@
----
-name: producer
-description: Aligns a coding agent with what the user actually wants before any code gets written. Use this whenever someone proposes building a new project, tool, app, script, or service and the goal behind it is not yet pinned down — phrases like "I want to build X", "I'm thinking about making X", "help me plan X", "let's start a project that does X". It resolves the granularity gap — whether they want the thing or want to make the thing, whether something off-the-shelf already solves it, how it gets delivered, and above all what the agent is forbidden to build. Output is a short SPEC.md whose first section is a numbered do-not-build list. Do NOT use this for bug fixes, refactors, adding a feature to an existing codebase, or any task where the user already handed over a detailed spec — this is for the fog at the start of a project, not for work already in motion.
----
-
 # Producer
 
 The failure this prevents: a user says "I want to build a photo organizer," the agent starts a scaffold with a `src/` tree, a config layer, a plugin system, a test suite, and a SQLite schema — and three days later nobody has organized a single photo. The gap isn't technical. It's that nobody asked what the project is *for*.
@@ -25,12 +20,12 @@ Producer that runs on everything is worse than no Producer. Skip it, say nothing
 
 - The task is small enough that building it costs less than discussing it (a shell one-liner, a regex, a 20-line script).
 - The user already wrote a detailed description, or handed over a spec, PRD, or issue.
-- The work is on an existing codebase — a fix, a refactor, a feature addition.
+- The work is on an existing codebase — a fix, a refactor, a feature addition — unless the project's goal or scope is explicitly being reconsidered.
 - The user is clearly mid-flow and asked for one specific thing.
 
-Run it when someone is proposing a *new* thing and the purpose behind it is fog. If unsure, one sentence is enough to check: "Quick check before I start — is this a throwaway or something you'll keep using?" The answer routes you.
+Run it when someone is proposing a *new* thing and the purpose behind it is fog, or when an existing project's goal or scope is explicitly reopened. If unsure, one sentence is enough to check: "Quick check before I start — is this a throwaway or something you'll keep using?" The answer routes you.
 
-Budget: **at most 2 rounds of questions** before producing an output. If it isn't clear after 2, that itself is the answer — go to termination state C (spike first). A Producer that runs a 20-question interview has become the over-engineering it exists to prevent.
+Budget: **at most 2 rounds of questions** before producing an output. If it isn't clear after 2, that itself is the answer — go to termination state B (spike first). A Producer that runs a 20-question interview has become the over-engineering it exists to prevent.
 
 ## Step 1 — The fork: do they want the thing, or want to make the thing?
 
@@ -82,7 +77,7 @@ Most requests are T1 or T2. Suspect yourself if you land on T4 — check that a 
 
 ## Step 3b — Frame, when the path is not obvious
 
-Tier and delivery settle what the thing is *for*. They do not settle what kind of problem it is. When a `gadfly` trigger holds — the medium fights the problem, the plan implies dozens of near-identical hand-written pieces, the user says it is easy to fail, or the user offers a hunch ("it's basically a compiler") — run `gadfly` now, before the do-not-build list, because the chosen frame produces prohibitions of its own. Skip for T1 and for anything with an obvious standard solution.
+Tier and delivery settle what the thing is *for*. They do not settle what kind of problem it is. When a Gadfly trigger holds — the medium fights the problem, the plan implies dozens of near-identical hand-written pieces, the user says it is easy to fail, or the user offers a hunch ("it's basically a compiler") — read [Gadfly](../gadfly/guide.md) now, before the do-not-build list, because the chosen frame produces prohibitions of its own. Skip for T1 and for anything with an obvious standard solution.
 
 This is the same move as the challenged defaults above, aimed at the solution path instead of the requirements: state the path that would happen by default, and make it survive an objection.
 
@@ -129,7 +124,9 @@ An interviewer that always produces a spec is a scope-inflation machine. Three l
 
 Match the fill depth to the tier. A T1 script gets the first three lines and two prohibitions; the other sections don't exist. If Producer generates a "Prior art" section for a ten-line script, it has become the thing it opposes.
 
-## Step 5 — Define the quality contract
+Steps 6 and 7 apply to the full build-it outcome, at the depth justified by the tier.
+
+## Step 6 — Define the quality contract
 
 A specification that only says what to build still leaves the agent optimizing against its default assumptions. Before writing the artifact, define the project's **quality contract**: the few properties that determine whether a solution feels correct rather than merely functional.
 
@@ -153,7 +150,7 @@ The quality contract answers:
 - What tempting solutions would technically work but violate the project's identity?
 - What trade-off should an agent preserve when requirements are ambiguous?
 
-## Step 6 — Predict failure modes
+## Step 7 — Predict failure modes
 
 Before implementation, list the likely wrong directions an agent may take. The purpose is not to describe bugs; it is to shrink the search space.
 
@@ -190,6 +187,8 @@ Keep it to one page. It only works if it gets reread, and it only gets reread if
 Intent: craft | consumer — <one line on why this exists>
 Done when: <one checkable scenario, at most three>
 Delivery: <exactly how it gets launched>
+Quality: <one or two observable trade-offs>
+Avoid: <likely wrong direction> → <preferred response>
 
 ## Do not build
 - N1 <mechanically checkable prohibition>

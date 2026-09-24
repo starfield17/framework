@@ -1,8 +1,3 @@
----
-name: surveyor
-description: Shapes and reshapes repository boundaries so a coding agent can change one part safely without loading the whole codebase. Use at bootstrap AND during the life of an established repository whenever a change creates, deletes, splits or merges a module; moves capability ownership; changes the dependency policy; proposes a new shared/common layer; repeatedly forces cross-module edits; or requires reading a neighbor's internals to make a local change correctly. Also use when asked where module boundaries should go, what belongs in AGENTS.md/CLAUDE.md, or how to stop architecture from rotting. This is an architecture-transition skill, not a one-time setup skill. Output is a repository map of facts plus at least one command that fails on a boundary violation. Do NOT use this to decide what to build (producer), to implement an ordinary feature that fits existing boundaries (steward), or to review a specific diff.
----
-
 # Surveyor
 
 The failure this prevents: an agent is asked to add one field to the export format. It reads forty files, edits nine, breaks two tests in a module it never opened, and adds a date helper to `utils/` that duplicates one already sitting in `common/`.

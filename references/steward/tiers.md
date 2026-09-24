@@ -134,7 +134,7 @@ if structure_events or hits["structure"]:
     sys.exit(4)
 
 for kind, tier, verdict in [
-    ("contract", 3, "STOP. A public/deployment contract changed. Name the callers, get a human yes when required."),
+    ("contract", 3, "STOP. A public/deployment contract changed. Name the callers and impact; seek a human decision if the break was not already authorized."),
     ("test",     2, "Tests changed. They land in their own commit, before the implementation."),
 ]:
     if hits[kind]:
@@ -157,7 +157,7 @@ Run it **twice** — once against the plan, once against the finished diff. The 
 
 **Tier 2 · behavior.** The rule is ordering, not approval. Change the tests first, in their own commit, and watch them fail for the reason you expect. Then implement. This is the whole of TDD that matters here, and it exists for a mechanical reason rather than a philosophical one: when the test and the implementation move in one commit, nothing distinguishes "I changed the expected behavior" from "I made the assertion match whatever the code now does," including for the agent writing it.
 
-**Tier 3 · contract.** Stop and produce three things before touching anything: the list of call sites (`grep`, not memory), what breaks for each, and whether the change is additive or breaking. Additive changes to a surface with a handful of internal callers are usually fine to proceed on after saying so. Breaking changes need a human. Adding one function to a public surface **is** a tier-3 change; the size of the addition is not the issue, the permanence of the promise is.
+**Tier 3 · contract.** Stop and produce three things before touching anything: the list of call sites (`grep`, not memory), what breaks for each, and whether the change is additive or breaking. Additive changes to a surface with a handful of internal callers are usually fine to proceed on after saying so. For breaking changes, seek a human decision if the task has not already authorized the break. Adding one function to a public surface **is** a tier-3 change; the size of the addition is not the issue, the permanence of the promise is.
 
 **Tier 4 · structure.** Re-enter `surveyor` before implementing the structural part. This includes a new/deleted module, moved capability ownership, or an edit to dependency policy/direction. After Surveyor establishes the boundary and its executable check, return to Steward for the implementation. Repository age is irrelevant; mature repositories can hit tier 4 repeatedly.
 

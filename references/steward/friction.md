@@ -65,4 +65,4 @@ Two entries naming the same constraint, where triage cannot pick "change the rul
 
 ## Feeding it back to producer
 
-Entries whose proposal is "this constraint should not exist" and which survive triage are the input to the next round of spec work, alongside the `Found · Not doing` list. Those two lists together are the honest record of where the plan met the code — which is the only material a revised plan should be built from, and which is otherwise entirely lost.
+Entries whose proposal is "this constraint should not exist" and which survive triage are the input to the next round of spec work, alongside the `Found · Not doing` list. Re-enter Producer only when that work reopens the project's goal or scope; ordinary refinements stay in Steward. Those two lists together are the honest record of where the plan met the code — which is the only material a revised plan should be built from, and which is otherwise entirely lost.

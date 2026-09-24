@@ -1,8 +1,3 @@
----
-name: steward
-description: Default change loop for an established codebase whose current module boundaries are already known. Use for bug fixes, feature additions, refactors and cleanup that fit those boundaries, and especially when tests are weakened to make CI green, dead code or duplicate helpers accumulate, a small fix starts widening a public surface, or nobody can tell which changes need approval. Steward also detects architecture transitions — if work creates/deletes/splits/merges a module, moves capability ownership, changes dependency policy, repeatedly crosses the same boundary, or requires a neighbor's internals, invoke/load `surveyor` before continuing the structural part, then return here for implementation. If the approach itself keeps failing (stuck twice for different reasons, or a repeated constraint that neither a rule change nor a code change can resolve), load `gadfly`. Output is a change tier, integrity/ratchet checks, observable verification, and friction feedback. Do NOT use this to decide what to build (producer), or as general coding-style advice.
----
-
 # Steward
 
 The failure this prevents: an agent is asked to fix a date-parsing bug. It fixes the bug, and one unrelated test starts failing. It adds `@pytest.mark.skip(reason="flaky")` to that test, writes a second `parse_date` next to the first because the existing one had a caller it didn't want to disturb, and widens a module's public surface by one function so it can reach a value it needed. CI is green. The diff looks small. Nobody objects.
@@ -43,7 +38,7 @@ Do not choose between Steward and Surveyor based on repository age. Choose based
 
 This distinction is deliberate: Steward owns **change discipline**; Surveyor owns **change topology**; Gadfly owns **the solution path** when that path, rather than the change, is what keeps failing.
 
-If a tier-4 signal appears after Steward has already been selected, do not keep going under Steward just because the session started here. Invoke/load Surveyor and apply its boundary procedure to the structural part. If the environment cannot dispatch another skill mid-task, read and follow the installed Surveyor instructions rather than reproducing a second architecture method here. Then return to this loop for the implementation.
+If a tier-4 signal appears after Steward has already been selected, do not keep going under Steward just because the session started here. Read [Surveyor](../surveyor/guide.md) and apply its boundary procedure to the structural part, then return to this loop for the implementation.
 
 ## The one rule that governs everything else
 
@@ -75,8 +70,8 @@ Every unit of steady-state work has the same shape.
 |---|---|---|
 | **1 · Internal** | No test file and no public-surface file in the diff | Just do it. Existing tests are the whole gate |
 | **2 · Behavior** | Test files in the diff, public surface untouched | Change the tests in their own commit, *before* the implementation, and say in one line what behavior changed |
-| **3 · Contract** | A public surface, schema, migration, or API file in the diff | Stop. Other people's code depends on this. Name the callers and get a human yes |
-| **4 · Structure** | Module set/ownership changes, or dependency policy changes | Architecture transition: run `surveyor`, then return here for implementation |
+| **3 · Contract** | A public surface, schema, migration, or API file in the diff | Stop and name the callers and impact. Seek a human decision for breaking changes when the task has not already authorized them |
+| **4 · Structure** | Module set/ownership changes, or dependency policy changes | Architecture transition: read Surveyor, then return here for implementation |
 
 Two properties matter more than the boundaries themselves. The test is **mechanical** — it reads the diff, so it does not depend on the agent's estimate of how big a change is, and that estimate is always rounded down. And the tier is **discovered before the work, checked again after**: a change that starts as tier 1 and ends touching a public file was a tier-3 change all along, discovered late.
 

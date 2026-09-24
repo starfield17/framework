@@ -1,8 +1,3 @@
----
-name: gadfly
-description: Makes the solution path compete before it is committed, then pins the winner so implementation cannot quietly drift back to the default. Use when the approach itself — not the requirements, not the module layout — is the open question. In particular: the task is solved in a medium not built for it (spreadsheet formulas, SQL, shell, CSS, a config language, a no-code tool, a shader); the plan involves hand-writing large amounts of near-identical structure; the user says the task is easy to fail or expensive to redo; a steward stuck report says the approach cannot meet its constraints; the same FRICTION.md constraint repeats and neither the rule nor the code can be defended; or the user offers a hunch or analogy ("it's like a compiler", "what if we treat it as X"). Output is a short Frame block — the default path, at most two rivals that move where the difficulty lives, where each breaks and what that forces, a decision or a kill probe, and a frame invariant with a check that fails when the frame is bypassed. Do NOT use for picking libraries, style debates, deciding what to build (producer), placing module boundaries (surveyor), or routine changes inside a settled approach (steward).
----
-
 # Gadfly
 
 The failure this prevents comes in two versions.
